@@ -8,6 +8,7 @@ import subprocess
 import json
 import base64
 import io
+import openai
 
 from os.path import join, dirname
 from dotenv import load_dotenv
@@ -26,6 +27,10 @@ dotenv_path = join(dirname(__file__), env_file)
 load_dotenv(dotenv_path)
 
 app = App(token=os.environ.get("SLACK_APP_TOKEN"))
+
+@app.message(re.compile("^ボケて\s(.*)$"))
+def message_bokete_alias(say, context):
+    message_bokete(say, context)
 
 @app.message(re.compile("^naobot\sbokete\s(.*)$"))
 def message_bokete(say, context):
@@ -49,10 +54,18 @@ def message_talk(say, context):
     say(answer)
 
 def chatgpt(text):
-    my_env = os.environ.copy()
-    answer = subprocess.run(["./chatgpt", text], encoding='utf-8', stdout=subprocess.PIPE, env=my_env)
+    openai.api_key = os.environ.get("CHATGPT_API_KEY")
+    completions = openai.Completion.create(
+       engine='text-davinci-003',
+       prompt=text,
+       max_tokens=1024,
+       temperature=0.5,
+       echo=True,
+       frequency_penalty=0.2,
+    )
+    message = completions.choices[0].text
 
-    return answer.stdout
+    return message
 
 @app.message(re.compile("^naobot\sraw\s(.*)$"))
 def message_art_raw(say, context):
@@ -127,6 +140,8 @@ def automatic1111(word):
     file_uploader_domain = os.environ.get("FILE_UPLOADER_DOMAIN")
     response = requests.post(f"https://{file_uploader_domain}/", files=files)
 
+    os.remove(f"{name}.png")
+
     return response.text
 
 def filename(n):
@@ -154,10 +169,15 @@ def translate(word):
 @app.message("naobot help")
 def message_help(message, say):
     say("""
-naobot art: AIイラスト
-naobot raw: AIイラスト（翻訳なし）
-naobot talk: ChatGPT会話
-naobot bokete: ChatGPT大喜利
+```
+naobot art {日本語prompt}: AIイラスト
+naobot raw {英語prompt}: AIイラスト
+naobot talk {word}: ChatGPT会話
+naobot bokete {お題}: ChatGPT大喜利
+
+alias:
+ボケて {お題}
+```
     """)
 
 
