@@ -11,27 +11,10 @@ import html
 from os.path import join, dirname
 from PIL import Image, PngImagePlugin
 
-class Illust:
+class Chiikawa:
     def __init__(self, deepl_api_key, automatic1111_domain):
         self.deepl_api_key = deepl_api_key
         self.automatic1111_domain = automatic1111_domain
-
-    def response(self, url, prompt, jp_prompt=None):
-        if jp_prompt is None:
-            jp_prompt = prompt
-
-        return [
-                {
-                    "type": "image",
-                    "title": {
-                        "type": "plain_text",
-                        "text": prompt
-                    },
-                    "block_id": "image4",
-                    "image_url": url,
-                    "alt_text": jp_prompt
-                }
-               ]
 
     def parent(self, context, event):
         if 'thread_ts' not in event:
@@ -49,8 +32,8 @@ class Illust:
         if not messages:
             group_history = context.client.conversations_replies(channel=channel, ts=ts)
             messages = group_history.data["messages"]
-        print(messages[0]['blocks'][0]['image_url'])
-        seeds = re.findall('\?seed=(\d+)', messages[0]['blocks'][0]['image_url'])
+        print(messages[0]['text'])
+        seeds = re.findall('\?seed=(\d+)', messages[0]['text'])
 
         if not seeds:
             return -1, ts
@@ -68,30 +51,7 @@ class Illust:
 
         url = self.automatic1111(word=translated, seed=seed)
 
-        say(blocks=self.response(url, translated, word), thread_ts=ts)
-
-    def message_raw_art(self, say, context, event):
-        word = html.unescape(context['matches'][0])
-        print(word)
-
-        seed, ts = self.parent(context, event)
-
-        url = self.automatic1111(word=word, seed=seed)
-
-        say(blocks=self.response(url, word), thread_ts=ts)
-
-    def message_prompt(self, say, context, event):
-        prompt = context['matches'][0]
-        negative = context['matches'][1]
-        print(prompt)
-        print(negative)
-
-        seed, ts = self.parent(context, event)
-        prompt = html.unescape(prompt)
-
-        url = self.automatic1111(prompt, negative, seed)
-
-        say(blocks=self.response(url, prompt), thread_ts=ts)
+        say(f"{translated} {url}", thread_ts=ts)
 
     def translate(self, word):
         params = {
@@ -114,7 +74,7 @@ class Illust:
         ]
         return ''.join(randlst)
 
-    def automatic1111(self, word, negative='anime, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated,ugly, disfigured, ullustration, (((painting))), toon, manga, comic, Cartoonize', seed=-1):
+    def automatic1111(self, word, negative='text, abstract, glitch, deformed, mutated,ugly, disfigured', seed=-1):
         payload = {
             "enable_hr": False,
             "denoising_strength": 0,
@@ -126,7 +86,7 @@ class Illust:
             "hr_resize_x": 0,
             "hr_resize_y": 0,
             #"prompt": f"cinematic still ({word}) . emotional, harmonious, vignette,highly detailed, highbudget, bokeh, cinemascope, moody, epic,gorgeous, film grain, grainy",
-            "prompt": f"cinematic still ({word}), emotional, harmonious, highly detailed, highbudget, vignette, photograph, cinema photo",
+            "prompt": f"<lora:tkw1:1>,tkw,animal, 2d, {word}",
             "styles": [
                 ""
             ],
@@ -135,8 +95,7 @@ class Illust:
             "subseed_strength": 0,
             "seed_resize_from_h": -1,
             "seed_resize_from_w": -1,
-            "sampler_name": "Euler a",
-            "sampler_index": "Euler a",
+            "sampler_name": "DPM++ 2S a",
             "batch_size": 1,
             "n_iter": 1,
             "steps": 30,
@@ -161,7 +120,6 @@ class Illust:
             "alwayson_scripts": {}
         }
         payload_json = json.dumps(payload)
-        print(payload_json)
 
         response = requests.post(
             url=f"http://{self.automatic1111_domain}/sdapi/v1/txt2img",
@@ -182,7 +140,5 @@ class Illust:
         response = requests.post(f"https://{file_uploader_domain}/", files=files)
 
         os.remove(f"{name}.png")
-        img_url = response.text + "?seed=" + str(seed)
-        requests.get(img_url)
 
-        return img_url
+        return response.text + "?seed=" + str(seed)

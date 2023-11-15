@@ -1,14 +1,80 @@
 import requests
 import re
-
 from chatgpt import ChatGPT
 from extractcontent3 import ExtractContent
 
+
 class ChatGPTSummary(ChatGPT):
+    MODEL = 'gpt-3.5-turbo'
+
+    def __init__(self, chatgpt_api_key, slack_client):
+      self.slack_client = slack_client
+      self.chatgpt_api_key = chatgpt_api_key
+
     def message_summary(self, say, context):
         url = context['matches'][0]
         print(url)
 
+        text = self.extract(url)
+
+        if len(text) == 0:
+            say('No Text')
+            return
+
+        answer = self.summary(text)
+        say(answer)
+
+    def reaction(self, event, say):
+        emoji = event["reaction"]
+        channel = event["item"]["channel"]
+        ts = event["item"]["ts"]
+
+        if emoji != "youyaku":
+            return
+
+        # タイムスタンプでメッセージを特定
+        conversations_history = self.slack_client.conversations_history(
+            channel=channel, oldest=ts, latest=ts, inclusive=1
+        )
+
+        messages = conversations_history.data["messages"]
+
+        # メッセージが取得出来ない場合、スレッドからメッセージを特定
+        if not messages:
+            group_history = self.slack_client.conversations_replies(channel=channel, ts=ts)
+            messages = group_history.data["messages"]
+
+        message = messages[0]["text"]
+        pattern = re.compile(r'https?://[\w/:%#\$&\?\(\)~\.=\+\-]+', re.S)
+        url = re.findall(pattern, message)
+
+        if not url:
+            return
+
+        text = self.extract(url[0])
+
+        if len(text) == 0:
+            say('No Text')
+            return
+
+        answer = self.summary(text)
+        say(text=answer, thread_ts=ts)
+
+
+    def summary(self, text):
+        text = self.token_cut(text, 15000)
+
+        messages = [
+            {"role": "system", "content": "文章を日本語で要約してください。"},
+            {"role": "user", "content": text}
+        ]
+
+        answer = self.chatgpt(messages, 16000)
+        print(answer)
+
+        return answer
+
+    def extract(self, url):
         extractor = ExtractContent()
 
         opt = {
@@ -27,20 +93,4 @@ class ChatGPTSummary(ChatGPT):
         extractor.analyse(html)
         text, title = extractor.as_text()
 
-        pattern = re.compile('[\u3040-\u309f\u30a0-\u30ff\u3005-\u3006\u30e0-\u9fcf]')
-        if bool(pattern.search(text)) and (len(text) > 3500):
-            text = text[:3500]
-        elif len(text) == 0:
-            say('No Text')
-            return
-
-        messages = [
-            {"role": "system", "content": "文章を日本語で要約してください。"},
-            {"role": "user", "content": text}
-        ]
-
-        answer = self.chatgpt(messages)
-        print(answer)
-
-        say(answer)
-
+        return text

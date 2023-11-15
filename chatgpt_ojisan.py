@@ -1,11 +1,10 @@
 from chatgpt import ChatGPT
-from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 class ChatGPTOjisan(ChatGPT):
-    def __init__(self, chatgpt_api_key, bot_token):
+    def __init__(self, chatgpt_api_key, slack_client):
         self.chatgpt_api_key = chatgpt_api_key
-        self.slack_client = WebClient(token=bot_token)
+        self.slack_client = slack_client
 
     def message_ojisan(self, message, say, context):
         user = message['user']
