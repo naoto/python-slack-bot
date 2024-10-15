@@ -224,13 +224,13 @@ class Illust(ChatGPT):
         size = self.q.qsize() + self.worker_count
         say(f"キュー残り:{size}")
 
-        if self.worker_count == 1:
-          say(f"- {self.worker_queue}")
+        q = self.q.queue
+        qlist = [f"- {item['prompt']}" for item in q]
 
-        if self.q.qsize() > 0:
-          q = self.q.queue
-          for qd in q:
-            say(f"- {qd['prompt']}")
+        if self.worker_count == 1:
+          qlist.insert(0, f"- {self.worker_queue}")
+
+        say("\n".join(qlist))
 
     def message_ukiyoe(self, say, context, event):
         word = context['matches'][0]
