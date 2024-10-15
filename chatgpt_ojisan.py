@@ -1,10 +1,16 @@
 from chatgpt import ChatGPT
 from slack_sdk.errors import SlackApiError
+import re
 
 class ChatGPTOjisan(ChatGPT):
-    def __init__(self, chatgpt_api_key, slack_client):
-        self.chatgpt_api_key = chatgpt_api_key
+    SIGNATURE = '^おじさん\s(.*)$'
+
+    def __init__(self, app, chatgpt_api_key, slack_client):
+        super().__init__(app, chatgpt_api_key)
         self.slack_client = slack_client
+
+    def register_message_handler(self):
+        self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_ojisan)
 
     def message_ojisan(self, message, say, context):
         user = message['user']

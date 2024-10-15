@@ -1,8 +1,19 @@
 import datetime
-
+import re
 from chatgpt import ChatGPT
 
 class Spiritual(ChatGPT):
+    SIGNATURE_TALOT = '^タロット$'
+    SIGNATURE_SEIMEI = '^姓名判断\s(.*)$'
+    SIGNATURE_URANAI = '^占い\s(.*)$'
+    SIGNATURE_UNSEI = '^運勢'
+
+    def register_message_handler(self):
+        self.app.message(re.compile(self.SIGNATURE_TALOT, re.S))(self.message_talot)
+        self.app.message(re.compile(self.SIGNATURE_SEIMEI, re.S))(self.message_seimei)
+        self.app.message(re.compile(self.SIGNATURE_URANAI, re.S))(self.message_uranai)
+        self.app.message(re.compile(self.SIGNATURE_UNSEI, re.S))(self.message_unsei)
+
     def message_unsei(self, say, context):
         print("運勢")
 

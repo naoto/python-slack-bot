@@ -5,8 +5,8 @@ from slack_sdk.errors import SlackApiError
 
 
 class ChatGPTTranslate(ChatGPT):
-    def __init__(self, chatgpt_api_key, slack_client):
-        self.chatgpt_api_key = chatgpt_api_key
+    def __init__(self, app, chatgpt_api_key, slack_client):
+        super().__init__(app, chatgpt_api_key)
         self.slack_client = slack_client
         self.flag = {
           "ad": "アンドラ公国",

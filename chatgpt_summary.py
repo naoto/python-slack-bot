@@ -5,11 +5,15 @@ from extractcontent3 import ExtractContent
 
 
 class ChatGPTSummary(ChatGPT):
-    MODEL = 'gpt-3.5-turbo'
+    MODEL = 'gpt-4o-mini'
+    SIGNATURE = '^summary\s<?(.*?)>?$'
 
-    def __init__(self, chatgpt_api_key, slack_client):
+    def __init__(self, app, chatgpt_api_key, slack_client):
+      super().__init__(app, chatgpt_api_key)
       self.slack_client = slack_client
-      self.chatgpt_api_key = chatgpt_api_key
+
+    def register_message_handler(self):
+        self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_summary)
 
     def message_summary(self, say, context):
         url = context['matches'][0]

@@ -1,7 +1,11 @@
 from chatgpt import ChatGPT
+import re
 
 class ChatGPTReverse(ChatGPT):
-    #MODEL = 'gpt-4'
+    SIGNATURE = '^対義語\s(.*)$'
+
+    def register_message_handler(self):
+        self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_reverse)
 
     def message_reverse(self, say, context):
         system_message = "質問を単語毎に分解して対義語を返してください。一例として「とびだせどうぶつの森」は「ひっこめ人間の砂漠」になります"

@@ -4,9 +4,15 @@ import os
 import random
 import string
 import requests
+import re
 
 
 class ChatGPTIllust(ChatGPT):
+    SIGNATURE = '^すごいイラスト\s(.*)$'
+
+    def register_message_handler(self):
+        self.app.message(re.compile(self.SIGNATURE, re.S))(self.message)
+
     def message(self, say, context):
         prompt = context['matches'][0]
 

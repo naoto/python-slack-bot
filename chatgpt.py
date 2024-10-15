@@ -1,14 +1,18 @@
 from openai import OpenAI
+from plugin import Plugin
 import traceback
 import tiktoken
 
 
-class ChatGPT:
-    MODEL = 'gpt-3.5-turbo'
-    #MODEL = 'gpt-4'
+class ChatGPT(Plugin):
+    #MODEL = 'gpt-3.5-turbo'
+    MODEL = 'gpt-4o-mini'
+    SIGNATURE = 'chatgpt'
 
-    def __init__(self, chatgpt_api_key):
+    def __init__(self, app, chatgpt_api_key):
+        super().__init__(app)
         self.chatgpt_api_key = chatgpt_api_key
+        
 
     def send_message(self, context, system_message):
         word = context['matches'][0]

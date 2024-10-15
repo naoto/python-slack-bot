@@ -4,7 +4,11 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 
 class ChatGPTMovie(ChatGPT):
-    MODEL = 'gpt-3.5-turbo'
+    MODEL = 'gpt-4o-mini'
+    SIGNATURE = '^movie\s<?(.*?)>?$'
+
+    def register_message_handler(self):
+        self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_movie)
 
     def message_movie(self, say, context):
         url = context['matches'][0]
