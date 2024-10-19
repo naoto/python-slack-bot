@@ -17,6 +17,7 @@ from os.path import join, dirname
 from PIL import Image, PngImagePlugin
 from plugin import Plugin
 from chatgpt import ChatGPT
+from modules import buckup
 
 class Illust(ChatGPT):
     SIGNATURE_JP = '^イラスト\s(.*)$'
@@ -46,6 +47,8 @@ class Illust(ChatGPT):
         thread.start()
         response = app.client.auth_test()
         self.user_id = response["user_id"]
+        self.buckup_queue_file_path = "queue.pkl"
+        self.load_queue()
 
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE_JP, re.S))(self.message_art)
@@ -61,17 +64,11 @@ class Illust(ChatGPT):
 
         self.app.message(re.compile(self.SIGNATURE_POEMU, re.S))(self.message_poemu)
 
-    def update_status(self, status_text):
-        return
-        if status_text > 0:
-            emoji = ":runner:"
-        else:
-            emoji = ":zzz:"
-
-        self.app.client.api_call(
-            api_method = 'users.profile.set',
-            params = { 'user_id': self.user_id, 'status_text': status_text, 'status_emoji': emoji }
-        )
+    def load_queue(self):
+        queue = buckup.load_buckup_queue(self.buckup_queue_file_path)
+        if queue is not None:
+            for item in queue:
+                self.queue_put(**item)
 
 
     def sd_start(self):
@@ -90,7 +87,7 @@ class Illust(ChatGPT):
 
         qp = {"word": word, "negative": negative, "seed": seed, "url": url, "prompt": prompt, "ts": ts, "say": say}
         self.q.put(qp)
-        self.update_status(self.q.qsize() + self.worker_count)
+        buckup.buckup_queue(self.q.queue, self.buckup_queue_file_path)
 
     def worker(self, q):
         while True:
@@ -113,7 +110,7 @@ class Illust(ChatGPT):
                 self.worker_queue = ""
                 item["say"](blocks=self.response(url, item["word"], item["prompt"]), thread_ts=item["ts"], reply_broadcast=True)
                 q.task_done()
-                self.update_status(self.q.qsize() + self.worker_count)
+                buckup.buckup_queue(q.queue, self.buckup_queue_file_path)
                 self.sd_restart()
 
             except Exception as e:

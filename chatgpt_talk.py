@@ -1,4 +1,5 @@
 from chatgpt import ChatGPT
+from modules import buckup
 import re
 
 class ChatGPTTalk(ChatGPT):
@@ -13,7 +14,10 @@ class ChatGPTTalk(ChatGPT):
     def __init__(self, app, chatgpt_api_key, queue, talk):
         super().__init__(app, chatgpt_api_key)
         self.message_history = talk
-        self.talk_system = "あなたは高性能AIです"
+        self.talk_history_file = "talk_history.json"
+        self.talk_job_file = "talk_job.json"
+        self.load_buckup(self.talk_history_file)
+        self.talk_system = buckup.load_buckup_job(self.talk_job_file)
         self.q = queue
 
     def register_message_handler(self):
@@ -24,6 +28,11 @@ class ChatGPTTalk(ChatGPT):
         self.app.message(re.compile(self.SIGNATURE_JOB_RESET, re.S))(self.message_job_reset)
         self.app.message(re.compile(self.SIGNATURE_JOB_SET, re.S))(self.message_job)
         self.app.message(re.compile(self.SIGNATURE_PICTURE, re.S))(self.message_picture)
+
+    def load_buckup(self, filepath):
+        talk = buckup.load_buckup(filepath)
+        for t in talk:
+            self.message_history.append(t)
 
     def queue_put(self, word, negative, seed, url, prompt, ts, say):
         if self.q.full():
@@ -63,6 +72,7 @@ class ChatGPTTalk(ChatGPT):
 
         self.message_history.append({"role": "assistant", "content": answer})
         say(answer)
+        buckup.buckup(self.message_history, self.talk_history_file)
 
     def message_job_check(self, say, context):
         print(f"job {self.talk_system}")
@@ -71,8 +81,8 @@ class ChatGPTTalk(ChatGPT):
 
     def message_job_reset(self, say, context):
         print("job reset")
-
         self.talk_system = "あなたは高性能AIです"
+        buckup.buckup_job(self.talk_system, self.talk_job_file)
         say("job reset")
 
     def message_job(self, say, context):
@@ -80,10 +90,12 @@ class ChatGPTTalk(ChatGPT):
         print(word)
 
         self.talk_system = word
+        buckup.buckup_job(self.talk_system, self.talk_job_file)
 
         say(f"job: {self.talk_system}")
         self.message_talk_reset(say, context)
 
     def message_talk_reset(self, say, context):
         self.message_history.clear()
+        buckup.buckup(self.message_history, self.talk_history_file)
         say("Talk Reset Success")
