@@ -11,17 +11,18 @@ import html
 from os.path import join, dirname
 from PIL import Image, PngImagePlugin
 
+
 class Chiikawa:
     def __init__(self, deepl_api_key, automatic1111_domain):
         self.deepl_api_key = deepl_api_key
         self.automatic1111_domain = automatic1111_domain
 
     def parent(self, context, event):
-        if 'thread_ts' not in event:
+        if "thread_ts" not in event:
             return -1, None
 
-        channel = event['channel']
-        ts = event['thread_ts']
+        channel = event["channel"]
+        ts = event["thread_ts"]
 
         conversations_history = context.client.conversations_history(
             channel=channel, oldest=ts, latest=ts, inclusive=1
@@ -32,8 +33,8 @@ class Chiikawa:
         if not messages:
             group_history = context.client.conversations_replies(channel=channel, ts=ts)
             messages = group_history.data["messages"]
-        print(messages[0]['text'])
-        seeds = re.findall('\?seed=(\d+)', messages[0]['text'])
+        print(messages[0]["text"])
+        seeds = re.findall("\?seed=(\d+)", messages[0]["text"])
 
         if not seeds:
             return -1, ts
@@ -41,7 +42,7 @@ class Chiikawa:
         return seeds[0], ts
 
     def message_art(self, say, context, event):
-        word = context['matches'][0]
+        word = context["matches"][0]
         print(word)
 
         seed, ts = self.parent(context, event)
@@ -55,26 +56,29 @@ class Chiikawa:
 
     def translate(self, word):
         params = {
-            'auth_key': self.deepl_api_key,
-            'text': word,
-            'source_lang': 'JA',
-            'target_lang': 'EN'
+            "auth_key": self.deepl_api_key,
+            "text": word,
+            "source_lang": "JA",
+            "target_lang": "EN",
         }
 
-        request = requests.post(
-            "https://api-free.deepl.com/v2/translate", data=params
-        )
+        request = requests.post("https://api-free.deepl.com/v2/translate", data=params)
         result = request.json()
 
-        return result['translations'][0]['text']
+        return result["translations"][0]["text"]
 
     def filename(self, n):
         randlst = [
             random.choice(string.ascii_letters + string.digits) for i in range(n)
         ]
-        return ''.join(randlst)
+        return "".join(randlst)
 
-    def automatic1111(self, word, negative='text, abstract, glitch, deformed, mutated,ugly, disfigured', seed=-1):
+    def automatic1111(
+        self,
+        word,
+        negative="text, abstract, glitch, deformed, mutated,ugly, disfigured",
+        seed=-1,
+    ):
         payload = {
             "enable_hr": False,
             "denoising_strength": 0,
@@ -85,11 +89,9 @@ class Chiikawa:
             "hr_second_pass_steps": 0,
             "hr_resize_x": 0,
             "hr_resize_y": 0,
-            #"prompt": f"cinematic still ({word}) . emotional, harmonious, vignette,highly detailed, highbudget, bokeh, cinemascope, moody, epic,gorgeous, film grain, grainy",
+            # "prompt": f"cinematic still ({word}) . emotional, harmonious, vignette,highly detailed, highbudget, bokeh, cinemascope, moody, epic,gorgeous, film grain, grainy",
             "prompt": f"<lora:tkw1:1>,tkw,animal, 2d, {word}",
-            "styles": [
-                ""
-            ],
+            "styles": [""],
             "seed": seed,
             "subseed": -1,
             "subseed_strength": 0,
@@ -117,24 +119,22 @@ class Chiikawa:
             "script_args": [],
             "send_images": True,
             "save_images": False,
-            "alwayson_scripts": {}
+            "alwayson_scripts": {},
         }
         payload_json = json.dumps(payload)
 
         response = requests.post(
             url=f"http://{self.automatic1111_domain}/sdapi/v1/txt2img",
-            data=payload_json
+            data=payload_json,
         ).json()
 
         seed = json.loads(response["info"])["seed"]
         name = self.filename(10)
-        for i in response['images']:
+        for i in response["images"]:
             image = Image.open(io.BytesIO(base64.b64decode(i)))
             image.save(f"{name}.png")
 
-        files = {
-            'imagedata': open(f"./{name}.png", 'rb')
-        }
+        files = {"imagedata": open(f"./{name}.png", "rb")}
 
         file_uploader_domain = os.environ.get("FILE_UPLOADER_DOMAIN")
         response = requests.post(f"https://{file_uploader_domain}/", files=files)

@@ -1,10 +1,11 @@
-from plugin import Plugin
 import queue
 import re
+from plugin import Plugin
+
 
 class FluxQueue(Plugin):
-    SIGNATURE_PUT = '^put\s(.*)$'
-    SIGNATURE_GET = '^get$'
+    SIGNATURE_PUT = "^put\s(.*)$"
+    SIGNATURE_GET = "^get$"
 
     def __init__(self, app):
         super().__init__(app)
@@ -15,9 +16,8 @@ class FluxQueue(Plugin):
         self.app.message(re.compile(self.SIGNATURE_GET, re.S))(self.message_get)
 
     def message_put(self, say, context):
-        self.q.put(context['matches'][0])
+        self.q.put(context["matches"][0])
         say("put")
 
     def message_get(self, say, context):
         say(self.q.get())
-

@@ -1,8 +1,9 @@
-from chatgpt import ChatGPT
 import re
+from chatgpt import ChatGPT
+
 
 class ChatGPTMagi(ChatGPT):
-    SIGNATURE = '^マギ\s(.*)$'
+    SIGNATURE = "^マギ\s(.*)$"
 
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_magi)

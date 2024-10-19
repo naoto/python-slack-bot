@@ -1,8 +1,9 @@
-from chatgpt import ChatGPT
 import re
+from chatgpt import ChatGPT
+
 
 class ChatGPTAA(ChatGPT):
-    SIGNATURE = '^aa\s(.*)$'
+    SIGNATURE = "^aa\s(.*)$"
 
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_aa)

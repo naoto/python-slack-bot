@@ -1,9 +1,10 @@
+import re
 from chatgpt import ChatGPT
 from illust import Illust
-import re
+
 
 class Poemu(ChatGPT, Illust):
-    SIGNATURE = '^ポエム\s(.*)$'
+    SIGNATURE = "^ポエム\s(.*)$"
 
     def __init__(self, app, automatic1111_domain, chatgpt_api_key):
         self.app = app
@@ -27,13 +28,14 @@ class Poemu(ChatGPT, Illust):
         url = self.automatic1111(word=answer)
 
         prompt = [
-            {"role": "system", "content": "あなたは通訳です。質問の内容を日本語に翻訳して返答してください。返答は翻訳した内容だけにしてください"},
-            {"role": "user", "content": answer}
+            {
+                "role": "system",
+                "content": "あなたは通訳です。質問の内容を日本語に翻訳して返答してください。返答は翻訳した内容だけにしてください",
+            },
+            {"role": "user", "content": answer},
         ]
 
         trans = self.chatgpt(prompt)
         print(trans)
 
-        say(blocks=self.response(url, trans, context['matches'][0]))
-
-
+        say(blocks=self.response(url, trans, context["matches"][0]))

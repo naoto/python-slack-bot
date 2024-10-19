@@ -1,15 +1,16 @@
+import re
 from chatgpt import ChatGPT
 from modules import buckup
-import re
+
 
 class ChatGPTTalk(ChatGPT):
-    SIGNATURE_TALK_JP = '^なおぼっと\s(.*)$'
-    SIGNATURE_TALK_EN = '^naobot\stalk\s(.*)$'
-    SIGNATURE_TALK_RESET = '^talk reset$'
-    SIGNATURE_JOB = '^job$'
-    SIGNATURE_JOB_RESET = '^job reset$'
-    SIGNATURE_JOB_SET = '^job\s(.*)$'
-    SIGNATURE_PICTURE = '^挿絵$'
+    SIGNATURE_TALK_JP = "^なおぼっと\s(.*)$"
+    SIGNATURE_TALK_EN = "^naobot\stalk\s(.*)$"
+    SIGNATURE_TALK_RESET = "^talk reset$"
+    SIGNATURE_JOB = "^job$"
+    SIGNATURE_JOB_RESET = "^job reset$"
+    SIGNATURE_JOB_SET = "^job\s(.*)$"
+    SIGNATURE_PICTURE = "^挿絵$"
 
     def __init__(self, app, chatgpt_api_key, queue, talk):
         super().__init__(app, chatgpt_api_key)
@@ -23,9 +24,13 @@ class ChatGPTTalk(ChatGPT):
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE_TALK_JP, re.S))(self.message_talk)
         self.app.message(re.compile(self.SIGNATURE_TALK_EN, re.S))(self.message_talk)
-        self.app.message(re.compile(self.SIGNATURE_TALK_RESET, re.S))(self.message_talk_reset)
+        self.app.message(re.compile(self.SIGNATURE_TALK_RESET, re.S))(
+            self.message_talk_reset
+        )
         self.app.message(re.compile(self.SIGNATURE_JOB, re.S))(self.message_job_check)
-        self.app.message(re.compile(self.SIGNATURE_JOB_RESET, re.S))(self.message_job_reset)
+        self.app.message(re.compile(self.SIGNATURE_JOB_RESET, re.S))(
+            self.message_job_reset
+        )
         self.app.message(re.compile(self.SIGNATURE_JOB_SET, re.S))(self.message_job)
         self.app.message(re.compile(self.SIGNATURE_PICTURE, re.S))(self.message_picture)
 
@@ -38,28 +43,43 @@ class ChatGPTTalk(ChatGPT):
         if self.q.full():
             raise Exception("Queueがいっぱいです")
 
-        qp = {"word": word, "negative": negative, "seed": seed, "url": url, "prompt": prompt, "ts": ts, "say": say}
+        qp = {
+            "word": word,
+            "negative": negative,
+            "seed": seed,
+            "url": url,
+            "prompt": prompt,
+            "ts": ts,
+            "say": say,
+        }
         self.q.put(qp)
 
     def message_picture(self, say, context):
         _message = self.message_history.copy()
-        _message.append({"role": "user", "content": "この話を象徴する場面の情景を英語で簡潔に教えて。"})
+        _message.append(
+            {
+                "role": "user",
+                "content": "この話を象徴する場面の情景を英語で簡潔に教えて。",
+            }
+        )
 
         answer = self.chatgpt(_message)
 
         prompt = [
-            {"role": "system", "content": "あなたは通訳です。質問の内容を日本語に翻訳して返答してください。返答は翻訳した内容だけにしてください"},
-            {"role": "user", "content": answer}
+            {
+                "role": "system",
+                "content": "あなたは通訳です。質問の内容を日本語に翻訳して返答してください。返答は翻訳した内容だけにしてください",
+            },
+            {"role": "user", "content": answer},
         ]
 
         jp_answer = self.chatgpt(prompt)
         print(jp_answer)
 
-        self.queue_put(answer, None, -1, None, jp_answer, None, say) 
-
+        self.queue_put(answer, None, -1, None, jp_answer, None, say)
 
     def message_talk(self, say, context):
-        word = context['matches'][0]
+        word = context["matches"][0]
         print(word)
 
         self.message_history.append({"role": "user", "content": word})
@@ -86,7 +106,7 @@ class ChatGPTTalk(ChatGPT):
         say("job reset")
 
     def message_job(self, say, context):
-        word = context['matches'][0]
+        word = context["matches"][0]
         print(word)
 
         self.talk_system = word

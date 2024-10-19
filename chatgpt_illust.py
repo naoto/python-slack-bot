@@ -1,20 +1,20 @@
-from chatgpt import ChatGPT
 import urllib.request
 import os
 import random
 import string
 import requests
 import re
+from chatgpt import ChatGPT
 
 
 class ChatGPTIllust(ChatGPT):
-    SIGNATURE = '^すごいイラスト\s(.*)$'
+    SIGNATURE = "^すごいイラスト\s(.*)$"
 
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE, re.S))(self.message)
 
     def message(self, say, context):
-        prompt = context['matches'][0]
+        prompt = context["matches"][0]
 
         try:
             url = self.generate_image(prompt)
@@ -23,31 +23,30 @@ class ChatGPTIllust(ChatGPT):
             say(blocks=self.response(cache_url, prompt))
         except Exception as e:
             file_uploader_domain = os.environ.get("FILE_UPLOADER_DOMAIN")
-            say(blocks=self.response("https://{file_uploader_domain}/data/a313829b554653a04c8f.jpg", "エラー"))
-
+            say(
+                blocks=self.response(
+                    "https://{file_uploader_domain}/data/a313829b554653a04c8f.jpg",
+                    "エラー",
+                )
+            )
 
     def response(self, url, prompt):
         return [
-                {
-                    "type": "image",
-                    "title": {
-                        "type": "plain_text",
-                        "text": prompt
-                    },
-                    "block_id": "image4",
-                    "image_url": url,
-                    "alt_text": prompt,
-                }
-               ]
+            {
+                "type": "image",
+                "title": {"type": "plain_text", "text": prompt},
+                "block_id": "image4",
+                "image_url": url,
+                "alt_text": prompt,
+            }
+        ]
 
     def cache(self, url):
         filename = self.filename(10)
         path = f"./{filename}.png"
         urllib.request.urlretrieve(url, path)
 
-        files = {
-            'imagedata': open(path, 'rb')
-        }
+        files = {"imagedata": open(path, "rb")}
 
         fileyy_uploader_domain = os.environ.get("FILE_UPLOADER_DOMAIN")
         response = requests.post(f"https://{file_uploader_domain}/", files=files)
@@ -58,9 +57,8 @@ class ChatGPTIllust(ChatGPT):
 
         return img_url
 
-
     def filename(self, n):
         randlst = [
             random.choice(string.ascii_letters + string.digits) for i in range(n)
         ]
-        return ''.join(randlst)
+        return "".join(randlst)

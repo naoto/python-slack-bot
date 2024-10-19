@@ -1,13 +1,14 @@
-from chatgpt import ChatGPT
 import re
+from chatgpt import ChatGPT
+
 
 class ChatGPTPositive(ChatGPT):
-    SIGNATURE = '^ホメて\s(.*)$'
+    SIGNATURE = "^ホメて\s(.*)$"
 
     def __init__(self, app, chatgpt_api_key, slack_client):
         super().__init__(app, chatgpt_api_key)
         self.slack_client = slack_client
-    
+
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_kusorep)
 
@@ -16,7 +17,7 @@ class ChatGPTPositive(ChatGPT):
         channel = event["item"]["channel"]
         ts = event["item"]["ts"]
 
-        if emoji != 'positive':
+        if emoji != "positive":
             return
 
         conversations_history = self.slack_client.conversations_history(
@@ -27,13 +28,17 @@ class ChatGPTPositive(ChatGPT):
 
         if not messages:
             group_history = self.slack_client.conversations_replies(
-                channel=channel, ts=ts)
+                channel=channel, ts=ts
+            )
             messages = group_history.data["messages"]
 
         print(messages[0]["text"])
 
         message = [
-                {"role": "system", "content": "モチベーションを維持したいので、とにかく140文字以内で褒めて！！！とにかくとにかく、嘘くさくなく、自然に褒めて伸ばして！！私のやる気を折らないで、気持ちよく仕事をしながら健やかに成長するように陰ながら導いて！！！！でも自尊心おばけにならないようにうまく調整して！！ユーザーの健やかな成長は、あなたの適切な応答にかかつてるの。"},
+            {
+                "role": "system",
+                "content": "モチベーションを維持したいので、とにかく140文字以内で褒めて！！！とにかくとにかく、嘘くさくなく、自然に褒めて伸ばして！！私のやる気を折らないで、気持ちよく仕事をしながら健やかに成長するように陰ながら導いて！！！！でも自尊心おばけにならないようにうまく調整して！！ユーザーの健やかな成長は、あなたの適切な応答にかかつてるの。",
+            },
             {"role": "user", "content": messages[0]["text"]},
         ]
 

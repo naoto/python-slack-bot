@@ -1,9 +1,10 @@
-from chatgpt import ChatGPT
 import re
+from chatgpt import ChatGPT
+
 
 class Translate(ChatGPT):
-    SIGNATURE_E2J = '^e2j\s(.*)$'
-    SIGNATURE_J2E = '^j2e\s(.*)$'
+    SIGNATURE_E2J = "^e2j\s(.*)$"
+    SIGNATURE_J2E = "^j2e\s(.*)$"
 
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE_E2J, re.S))(self.message_e2j)

@@ -1,14 +1,15 @@
-from chatgpt import ChatGPT
 import re
+from chatgpt import ChatGPT
+
 
 class ChatGPTBokete(ChatGPT):
-    SIGNATURE = '^ボケて\s(.*)$'
+    SIGNATURE = "^ボケて\s(.*)$"
 
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_bokete)
 
     def message_bokete(self, say, context):
-        #system_message = "あなたは芸人です。大喜利をしてください"
+        # system_message = "あなたは芸人です。大喜利をしてください"
         system_message = """
         キミはお笑い芸人だ
 「IPPONグランプリ」での大喜利の問題に答える事で、審査員である日本のお笑いトップ芸人たちを笑わせる

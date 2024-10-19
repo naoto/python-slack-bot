@@ -1,21 +1,20 @@
-from openai import OpenAI
-from plugin import Plugin
 import traceback
 import tiktoken
+from openai import OpenAI
+from plugin import Plugin
 
 
 class ChatGPT(Plugin):
-    #MODEL = 'gpt-3.5-turbo'
-    MODEL = 'gpt-4o-mini'
-    SIGNATURE = 'chatgpt'
+    # MODEL = 'gpt-3.5-turbo'
+    MODEL = "gpt-4o-mini"
+    SIGNATURE = "chatgpt"
 
     def __init__(self, app, chatgpt_api_key):
         super().__init__(app)
         self.chatgpt_api_key = chatgpt_api_key
-        
 
     def send_message(self, context, system_message):
-        word = context['matches'][0]
+        word = context["matches"][0]
         print(word)
 
         messages = [
@@ -34,9 +33,7 @@ class ChatGPT(Plugin):
         print(messages)
 
         try:
-            client = OpenAI(
-                api_key = self.chatgpt_api_key
-            )
+            client = OpenAI(api_key=self.chatgpt_api_key)
 
             completions = client.chat.completions.create(
                 model=self.MODEL,
@@ -52,16 +49,16 @@ class ChatGPT(Plugin):
         enc = tiktoken.encoding_for_model(self.MODEL)
 
         token_total = 0
-        if messages[0]['role'] == 'system':
-            system_tokens = enc.encode(messages[0]['content'])
+        if messages[0]["role"] == "system":
+            system_tokens = enc.encode(messages[0]["content"])
             token_total = len(system_tokens)
 
         active = []
         messages.reverse()
 
         for item in messages:
-            tokens = enc.encode(item['content'])
-            if item['role'] == 'system' or (len(tokens) + token_total) <= size:
+            tokens = enc.encode(item["content"])
+            if item["role"] == "system" or (len(tokens) + token_total) <= size:
                 active.append(item)
                 token_total += len(tokens)
 
@@ -77,11 +74,10 @@ class ChatGPT(Plugin):
 
         return enc.decode(tokens)
 
-
-    def generate_image(self, prompt, model='dall-e-3', size='1024x1024', quality='standard', n=1):
-        client = OpenAI(
-            api_key = self.chatgpt_api_key
-        )
+    def generate_image(
+        self, prompt, model="dall-e-3", size="1024x1024", quality="standard", n=1
+    ):
+        client = OpenAI(api_key=self.chatgpt_api_key)
 
         response = client.images.generate(
             model=model,

@@ -4,14 +4,14 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 
 class ChatGPTMovie(ChatGPT):
-    MODEL = 'gpt-4o-mini'
-    SIGNATURE = '^movie\s<?(.*?)>?$'
+    MODEL = "gpt-4o-mini"
+    SIGNATURE = "^movie\s<?(.*?)>?$"
 
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_movie)
 
     def message_movie(self, say, context):
-        url = context['matches'][0]
+        url = context["matches"][0]
         print(url)
 
         regex = r"(?:youtu\.be/|youtube\.com/watch\?v=)([\-\w]+)"
@@ -26,16 +26,16 @@ class ChatGPTMovie(ChatGPT):
         try:
             transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
 
-            word = ''
+            word = ""
             for transcript in transcript_list:
                 for tr in transcript.fetch():
-                    word = word + tr['text']
+                    word = word + tr["text"]
 
             word = self.token_cut(word, 15000)
 
             messages = [
                 {"role": "system", "content": "文章を日本語で要約してください。"},
-                {"role": "user", "content": word}
+                {"role": "user", "content": word},
             ]
 
             answer = self.chatgpt(messages, 16000)

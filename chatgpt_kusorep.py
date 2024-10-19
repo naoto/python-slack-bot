@@ -1,8 +1,9 @@
-from chatgpt import ChatGPT
 import re
+from chatgpt import ChatGPT
+
 
 class ChatGPTKusorep(ChatGPT):
-    SIGNATURE = '^クソリプ\s(.*)$'
+    SIGNATURE = "^クソリプ\s(.*)$"
 
     def register_message_handler(self):
         self.app.message(re.compile(self.SIGNATURE, re.S))(self.message_kusorep)
@@ -16,7 +17,7 @@ class ChatGPTKusorep(ChatGPT):
         channel = event["item"]["channel"]
         ts = event["item"]["ts"]
 
-        if emoji != 'kusorep':
+        if emoji != "kusorep":
             return
 
         conversations_history = self.slack_client.conversations_history(
@@ -27,13 +28,17 @@ class ChatGPTKusorep(ChatGPT):
 
         if not messages:
             group_history = self.slack_client.conversations_replies(
-                channel=channel, ts=ts)
+                channel=channel, ts=ts
+            )
             messages = group_history.data["messages"]
 
         print(messages[0]["text"])
 
         message = [
-            {"role": "system", "content": "あなたはTwitterにいるクソリプが得意な人です。質問に対して日本語で140文字以内でクソリプをしてください。"},
+            {
+                "role": "system",
+                "content": "あなたはTwitterにいるクソリプが得意な人です。質問に対して日本語で140文字以内でクソリプをしてください。",
+            },
             {"role": "user", "content": messages[0]["text"]},
         ]
 
